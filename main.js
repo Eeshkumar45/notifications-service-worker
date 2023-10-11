@@ -1,22 +1,19 @@
-str = "";
-
-addEventListener("load", (event) => {Notification.requestPermission()});
-async function sendMessage() {
-    const registration = await navigator.serviceWorker.ready;
-    await registration.sync.register('my-tag-name');
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+        .then(function(registration) {
+            console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(function(error) {
+            console.error('Service Worker registration failed:', error);
+        });
 }
 
-function register(){
-    navigator.serviceWorker.register('./service-worker.js')
-    .then(reg => console.log('SW registered!', reg))
-    .catch(err => console.log('Boo!', err));
-}
+navigator.serviceWorker.addEventListener('controllerchange', function() {
+    console.log('Service Worker is now controlling the page.');
+    window.location.reload();
+});
 
-function stop(){
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-            registration.unregister();
-        } 
-    });
-}
-
+fetch('https://jsonplaceholder.typicode.com/posts/1')
+    .then(response => response.json())
+    .then(data => console.log('Fetched data:', data))
+    .catch(error => console.error('Fetch error:', error));

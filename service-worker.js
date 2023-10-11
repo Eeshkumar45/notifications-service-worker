@@ -1,37 +1,32 @@
-self.addEventListener("install", () => {
-  console.log("install");
-});
-
-self.addEventListener("active", () => {
-  console.log("active");
-});
-
-self.addEventListener("waiting", () => {
-  console.log("waiting");
-});
-self.addEventListener("message", (event) => {
-  console.log("message on service worker : " + event.data);
-});
-
-self.addEventListener("sync", (event) => {
-  if (event.tag === "my-tag-name") {
+self.addEventListener('install', function(event) {
     event.waitUntil(
-        setInterval(()=>sendNotification(),5000)
+        caches.open('my-cache').then(function(cache) {
+            return cache.addAll([
+                'index.html',
+                'main.js',
+            ]);
+        })
     );
-  }
 });
 
-var notificationCount=0;
+self.addEventListener('activate', function(event) {
+    event.waitUntil(
+        caches.keys().then(function(cacheNames) {
+            return Promise.all(
+                cacheNames.map(function(cacheName) {
+                    if (cacheName !== 'my-cache') {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+});
 
-function sendNotification(){
-    notificationCount++;
-    const notificationOptions = {
-        body: 'This is a notification from your service worker.',
-        icon: 'path-to-your-icon.png',
-      };
-
-    self.registration.showNotification(
-        "Notification from Service Worker : "+notificationCount,
-        notificationOptions
-      )
-}
+self.addEventListener('fetch', function(event) {
+    event.respondWith(
+        caches.match(event.request).then(function(response) {
+            return response || fetch(event.request);
+        })
+    );
+});
